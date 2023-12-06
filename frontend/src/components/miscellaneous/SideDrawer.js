@@ -228,7 +228,7 @@ const SideDrawer = () => {
                   // key={user._id}
                   key={user.id}
                   user={user}
-                  handleFunction={() => accessChat(user.id)}
+                  handleFunction={() => accessChat(user._id)}
                   // handleFunction={() => accessChat(user._id)}
                 />
               ))
