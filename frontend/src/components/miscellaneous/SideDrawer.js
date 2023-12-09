@@ -142,7 +142,7 @@ const SideDrawer = () => {
             </Text>
           </Button>
         </Tooltip>
-        <Text fontSize={"2xl"}>Mybihal</Text>
+        <Text fontSize={"2xl"}>ECHO</Text>
         <div>
           <Menu>
             <MenuButton p={1}>
@@ -226,9 +226,9 @@ const SideDrawer = () => {
               searchResult?.map((user) => (
                 <UserListItem
                   // key={user._id}
-                  key={user.id}
+                  key={user._id}
                   user={user}
-                  handleFunction={() => accessChat(user.id)}
+                  handleFunction={() => accessChat(user._id)}
                   // handleFunction={() => accessChat(user._id)}
                 />
               ))

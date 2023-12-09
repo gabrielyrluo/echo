@@ -42,7 +42,7 @@ const Homepage = () => {
           color={"black"}
           align={"center"}
         >
-          Mybihal
+          ECHO
         </Text>
         <Tabs size="md" variant="enclosed">
           <TabList>

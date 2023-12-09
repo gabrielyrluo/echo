@@ -111,7 +111,7 @@ const Login = () => {
         LOGIN
       </Button>
 
-      <Button
+      {/* <Button
         variant={"solid"}
         colorScheme="blue"
         width={"100%"}
@@ -121,7 +121,7 @@ const Login = () => {
         }}
       >
         ONLY FOR TEST
-      </Button>
+      </Button> */}
     </VStack>
   );
 };
