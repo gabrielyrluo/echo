@@ -48,7 +48,7 @@ const MyChats = ({ fetchAgain }) => {
       p={3}
       bg="white"
       w={{ base: "100%", md: "31%" }}
-      borderRadius="lg"
+      // borderRadius="lg"
       borderWidth="1px"
     >
       <Box
@@ -78,7 +78,7 @@ const MyChats = ({ fetchAgain }) => {
         bg="#F8F8F8"
         w="100%"
         h="100%"
-        borderRadius="lg"
+        // borderRadius="lg"
         overflowY="hidden"
       >
         {chats ? (
@@ -91,7 +91,7 @@ const MyChats = ({ fetchAgain }) => {
                 color={selectedChat === chat ? "white" : "black"}
                 px={3}
                 py={2}
-                borderRadius="lg"
+                // borderRadius="lg"
                 key={chat._id}
               >
                 <Text>

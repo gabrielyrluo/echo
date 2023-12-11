@@ -37,6 +37,7 @@ const SideDrawer = () => {
 
   const {
     user,
+    setUser,
     setSelectedChat,
     chats,
     setChats,
@@ -47,7 +48,9 @@ const SideDrawer = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const logoutHandler = () => {
-    // setUser(null);
+    setUser(null);
+    setSelectedChat(null);
+    setChats([]);
     localStorage.removeItem("userInfo");
     history.push("/");
   };
@@ -104,7 +107,6 @@ const SideDrawer = () => {
       const { data } = await axios.post("/api/chat", { userId }, config);
 
       if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
-
       setSelectedChat(data);
       setLoadingChat(false);
       onClose();
@@ -147,14 +149,7 @@ const SideDrawer = () => {
           <Menu>
             <MenuButton p={1}>
               {notification.length >= 1 && (
-                <Badge
-                  colorScheme="red"
-                  // variant="solid"
-                  // position="absolute"
-                  // top="2"
-                  // right="5"
-                  fontSize="0.8em"
-                >
+                <Badge colorScheme="red" fontSize="0.8em">
                   {notification.length}
                 </Badge>
               )}

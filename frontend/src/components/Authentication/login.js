@@ -11,12 +11,15 @@ import {
 import React, { useState } from "react";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
+import { ChatState } from "../../Context/chatProvider"; //
 
 const Login = () => {
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
   const [loading, setLoading] = useState();
+
+  const { setUser } = ChatState(); //
 
   const handleClick = () => setShow(!show);
   const toast = useToast();
@@ -58,12 +61,32 @@ const Login = () => {
       });
 
       localStorage.setItem("userInfo", JSON.stringify(data));
+      const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+      setUser(userInfo);
       setLoading(false);
       history.push("/chats");
     } catch (error) {
+      let errorMessage = "An error occurred";
+
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        } else {
+          // You might want to handle generic HTTP status code messages here
+          errorMessage = `Error: ${error.response.status}`;
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage = "No response received from the server";
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        errorMessage = error.message;
+      }
       toast({
         title: "Error Occured!",
-        description: error.response.data.message,
+        description: errorMessage,
         status: "error",
         duration: 5000,
         isClosable: true,
