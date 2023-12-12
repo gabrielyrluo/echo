@@ -126,7 +126,7 @@ const Signup = () => {
       setUser(userInfo);
 
       setLoading(false);
-      history.push("/chats");
+      history.push("/intermediate");
     } catch (error) {
       toast({
         title: "Error Occured!",

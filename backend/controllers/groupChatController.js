@@ -1,74 +1,9 @@
 const asyncHandler = require("express-async-handler");
-const Chat = require("../models/chatModel");
+const GroupChat = require("../models/groupChatModel");
 const User = require("../models/userModel");
+const { resignChannelAdmin } = require("./channelController");
 
-const accessChat = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
-
-  if (!userId) {
-    console.log("UserId param not sent with request");
-    return res.sendStatus(400);
-  }
-
-  var isChat = await Chat.find({
-    isGroupChat: false,
-    $and: [
-      { users: { $elemMatch: { $eq: req.user._id } } },
-      { users: { $elemMatch: { $eq: userId } } },
-    ],
-  })
-    .populate("users", "-password")
-    .populate("latestMessage");
-
-  isChat = await User.populate(isChat, {
-    path: "latestMessage.sender",
-    select: "name pic email",
-  });
-
-  if (isChat.length > 0) {
-    res.send(isChat[0]);
-  } else {
-    var chatData = {
-      chatName: "sender",
-      isGroupChat: false,
-      users: [req.user._id, userId],
-    };
-
-    try {
-      const createdChat = await Chat.create(chatData);
-      const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
-        "users",
-        "-password"
-      );
-      res.status(200).json(FullChat);
-    } catch (error) {
-      res.status(400);
-      throw new Error(error.message);
-    }
-  }
-});
-
-const fetchChats = asyncHandler(async (req, res) => {
-  try {
-    Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
-      .populate("users", "-password")
-      .populate("groupAdmin", "-password")
-      .populate("latestMessage")
-      .sort({ updatedAt: -1 })
-      .then(async (results) => {
-        results = await User.populate(results, {
-          path: "latestMessage.sender",
-          select: "name pic email",
-        });
-        res.status(200).send(results);
-      });
-  } catch (error) {
-    res.status(400);
-    throw new Error(error.message);
-  }
-});
-
-const createGroupChat = asyncHandler(async (req, res) => {
+const createChat = asyncHandler(async (req, res) => {
   if (!req.body.users || !req.body.name) {
     return res.status(400).send({ message: "Please Fill all the feilds" });
   }
@@ -84,14 +19,13 @@ const createGroupChat = asyncHandler(async (req, res) => {
   users.push(req.user);
 
   try {
-    const groupChat = await Chat.create({
+    const groupChat = await GroupChat.create({
       chatName: req.body.name,
       users: users,
-      isGroupChat: true,
       groupAdmin: req.user,
     });
 
-    const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
+    const fullGroupChat = await GroupChat.findOne({ _id: groupChat._id })
       .populate("users", "-password")
       .populate("groupAdmin", "-password");
 
@@ -102,10 +36,51 @@ const createGroupChat = asyncHandler(async (req, res) => {
   }
 });
 
+const fetchChats = asyncHandler(async (req, res) => {
+  try {
+    GroupChat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password")
+      .sort({ updatedAt: -1 })
+      .then(async (results) => {
+        results = await User.populate(results, {
+          path: "sender",
+          select: "name pic email",
+        });
+        res.status(200).send(results);
+      });
+  } catch (error) {
+    res.status(400);
+    throw new Error(error.message);
+  }
+});
+
+const accessChat = asyncHandler(async (req, res) => {
+  const { chatId } = req.body;
+
+  if (!chatId) {
+    return res.status(400).send({ message: "Chat ID is required" });
+  }
+
+  try {
+    const chat = await GroupChat.findById(chatId)
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
+
+    if (!chat) {
+      res.status(404).send({ message: "Chat not found" });
+    } else {
+      res.status(200).json(chat);
+    }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
 const renameGroup = asyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
 
-  const updatedChat = await Chat.findByIdAndUpdate(
+  const updatedChat = await GroupChat.findByIdAndUpdate(
     chatId,
     {
       chatName: chatName,
@@ -124,12 +99,13 @@ const renameGroup = asyncHandler(async (req, res) => {
     res.json(updatedChat);
   }
 });
+
 const removeFromGroup = asyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
   // check if the requester is admin
 
-  const removed = await Chat.findByIdAndUpdate(
+  const removed = await GroupChat.findByIdAndUpdate(
     chatId,
     {
       $pull: { users: userId },
@@ -154,7 +130,7 @@ const addToGroup = asyncHandler(async (req, res) => {
 
   // check if the requester is admin
 
-  const added = await Chat.findByIdAndUpdate(
+  const added = await GroupChat.findByIdAndUpdate(
     chatId,
     {
       $push: { users: userId },
@@ -178,7 +154,7 @@ const resignGroupAdmin = asyncHandler(async (req, res) => {
   const { chatId } = req.body;
 
   // Fetch the chat document
-  const chat = await Chat.findById(chatId)
+  const chat = await GroupChat.findById(chatId)
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
 
@@ -191,13 +167,15 @@ const resignGroupAdmin = asyncHandler(async (req, res) => {
   if (!chat.users.some((user) => user._id.equals(chat.groupAdmin._id))) {
     // If the current admin is not in the group, reassign the admin role
     // to the first user in the users list
-    const updatedChat = await Chat.findByIdAndUpdate(
+    const updatedChat = await GroupChat.findByIdAndUpdate(
       chatId,
       { groupAdmin: chat.users[0]._id },
       { new: true }
     )
       .populate("users", "-password")
       .populate("groupAdmin", "-password");
+
+    await resignChannelAdmin(chatId, chat.users[0]._id);
 
     res.status(200).json(updatedChat);
   } else {
@@ -206,9 +184,9 @@ const resignGroupAdmin = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  accessChat,
+  createChat,
   fetchChats,
-  createGroupChat,
+  accessChat,
   renameGroup,
   addToGroup,
   removeFromGroup,

@@ -1,11 +1,11 @@
 import { ChatState } from "../Context/chatProvider";
 import { Box } from "@chakra-ui/react";
-import SideDrawer from "../components/miscellaneous/SideDrawer";
+import SideDrawer from "../components/PrivateChat/SideDrawer";
 import React, { useState } from "react";
-import MyChats from "../components/miscellaneous/MyChats";
-import ChatBox from "../components/miscellaneous/ChatBox";
+import PChats from "../components/PrivateChat/PChats";
+import PChatBox from "../components/PrivateChat/PChatBox";
 
-const Chatpage = () => {
+const PGpage = () => {
   const { user } = ChatState();
   const [fetchAgain, setFetchAgain] = useState(false);
   return (
@@ -18,13 +18,13 @@ const Chatpage = () => {
         h={"91.5vh"}
         p={"10px"}
       >
-        {user && <MyChats fetchAgain={fetchAgain} />}
+        {user && <PChats fetchAgain={fetchAgain} />}
         {user && (
-          <ChatBox fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />
+          <PChatBox fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />
         )}
       </Box>
     </div>
   );
 };
 
-export default Chatpage;
+export default PGpage;

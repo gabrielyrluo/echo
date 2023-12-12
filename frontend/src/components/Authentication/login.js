@@ -64,7 +64,7 @@ const Login = () => {
       const userInfo = JSON.parse(localStorage.getItem("userInfo"));
       setUser(userInfo);
       setLoading(false);
-      history.push("/chats");
+      history.push("/intermediate");
     } catch (error) {
       let errorMessage = "An error occurred";
 

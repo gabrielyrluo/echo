@@ -28,7 +28,7 @@ const GroupChatModal = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
-  const { user, chats, setChats } = ChatState();
+  const { user, chats, setChats, channels, setChannels } = ChatState();
 
   const handleGroup = (userToAdd) => {
     if (selectedUsers.includes(userToAdd)) {
@@ -98,7 +98,7 @@ const GroupChatModal = ({ children }) => {
         },
       };
       const { data } = await axios.post(
-        `/api/chat/group`,
+        `/api/groupchat/create`,
         {
           name: groupChatName,
           users: JSON.stringify(selectedUsers.map((u) => u._id)),
@@ -107,9 +107,21 @@ const GroupChatModal = ({ children }) => {
         config
       );
       setChats([data, ...chats]);
+
+      const { channel } = await axios.post(
+        `/api/channel/create`,
+        {
+          channelName: "General",
+          groupId: data._id,
+          users: JSON.stringify(selectedUsers.map((u) => u._id)),
+        },
+        config
+      );
+
+      setChannels(channel);
       onClose();
       toast({
-        title: "New Group Chat Created!",
+        title: "New Group and defalut channel Created!",
         status: "success",
         duration: 5000,
         isClosable: true,

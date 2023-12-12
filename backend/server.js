@@ -4,9 +4,14 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
-const chatRoutes = require("./routes/chatRoutes");
-const messageRoutes = require("./routes/messageRoutes");
+// const chatRoutes = require("./routes/chatRoutes");
+// const messageRoutes = require("./routes/messageRoutes");
 const path = require("path");
+const singleChatRoute = require("./routes/singleCRoute");
+const singleMessageRoute = require("./routes/singleMRoute");
+const groupChatRoute = require("./routes/groupChatRoute");
+const channelRoute = require("./routes/channelRoutes");
+const groupMessageRoute = require("./routes/groupMessageRoutes");
 
 dotenv.config();
 connectDB();
@@ -15,8 +20,13 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/user", userRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/message", messageRoutes);
+app.use("/api/singlechat", singleChatRoute);
+app.use("/api/singlemessage", singleMessageRoute);
+app.use("/api/groupchat", groupChatRoute);
+// app.use("/api/chat", chatRoutes);
+// app.use("/api/message", messageRoutes);
+app.use("/api/channel", channelRoute);
+app.use("/api/groupmessage", groupMessageRoute);
 
 //------------------------------------------------------
 const __dirname1 = path.resolve();
@@ -74,6 +84,17 @@ io.on("connection", (socket) => {
       if (user._id == newMessageRecieved.sender._id) return;
 
       socket.in(user._id).emit("message recieved", newMessageRecieved);
+    });
+  });
+
+  socket.on("new group message", async (newMessageRecieved) => {
+    var channel = newMessageRecieved.channel;
+    if (!channel.users) return console.log("channel.users not defined");
+
+    channel.users.forEach((user) => {
+      if (user._id == newMessageRecieved.sender._id) return;
+
+      socket.in(user._id).emit("group message recieved", newMessageRecieved);
     });
   });
 

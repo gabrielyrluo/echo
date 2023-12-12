@@ -7,7 +7,6 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerOverlay,
-  Input,
   Menu,
   MenuButton,
   MenuItem,
@@ -16,25 +15,19 @@ import {
   Tooltip,
   useDisclosure,
   useToast,
-  Spinner,
   Badge,
 } from "@chakra-ui/react";
 import { ChatIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import React, { useState } from "react";
 import { ChatState } from "../../Context/chatProvider";
-import ProfileModel from "./ProfileModel";
+import ProfileModel from "../miscellaneous/ProfileModel";
 import { useHistory } from "react-router-dom";
 import axios from "axios";
-import ChatLoading from "./ChatLoading";
-import UserListItem from "../UserAvater/UserListItem";
+import ChatList from "./ChatList";
 import { getSender } from "../../config/Chatlogic";
+import GroupChatModal from "./GroupChatModal";
 
 const SideDrawer = () => {
-  const [search, setSearch] = useState("");
-  const [searchResult, setSearchResult] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingChat, setLoadingChat] = useState();
-
   const {
     user,
     setUser,
@@ -57,35 +50,20 @@ const SideDrawer = () => {
 
   const toast = useToast();
 
-  const handleSearch = async () => {
-    if (!search) {
-      toast({
-        title: "Please Enter something in search",
-        status: "warning",
-        duration: 5000,
-        isClosable: true,
-        position: "top-left",
-      });
-      return;
-    }
-
+  const fetchChats = async () => {
     try {
-      setLoading(true);
-
       const config = {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
       };
 
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
-
-      setLoading(false);
-      setSearchResult(data);
+      const { data } = await axios.get("/api/groupchat", config);
+      setChats(data);
     } catch (error) {
       toast({
         title: "Error Occured!",
-        description: "Failed to Load the Search Results",
+        description: "Failed to Load the chats",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -94,9 +72,8 @@ const SideDrawer = () => {
     }
   };
 
-  const accessChat = async (userId) => {
+  const accessChat = async (chatId) => {
     try {
-      setLoadingChat(true);
       const config = {
         headers: {
           "Content-type": "application/json",
@@ -104,11 +81,9 @@ const SideDrawer = () => {
         },
       };
 
-      const { data } = await axios.post("/api/chat", { userId }, config);
+      const { data } = await axios.post("/api/groupchat", { chatId }, config);
 
-      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
       setSelectedChat(data);
-      setLoadingChat(false);
       onClose();
     } catch (error) {
       toast({
@@ -125,6 +100,7 @@ const SideDrawer = () => {
   const clearNotifis = () => {
     setNotification([]);
   };
+
   return (
     <>
       <Box
@@ -136,17 +112,23 @@ const SideDrawer = () => {
         p="5px 10px 5px 10px"
         borderWidth="5px"
       >
-        <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
-          <Button variant={"ghost"} onClick={onOpen}>
+        <Tooltip label="See All Chats" hasArrow placement="bottom-end">
+          <Button
+            variant={"ghost"}
+            onClick={() => {
+              onOpen();
+              fetchChats();
+            }}
+          >
             <i class="fas fa-search"></i>
             <Text display={{ base: "none", md: "flex" }} px={"4"}>
-              Search User
+              My Group Chats
             </Text>
           </Button>
         </Tooltip>
         <Text fontSize={"2xl"}>ECHO</Text>
         <div>
-          <Menu>
+          {/* <Menu>
             <MenuButton p={1}>
               {notification.length >= 1 && (
                 <Badge colorScheme="red" fontSize="0.8em">
@@ -179,7 +161,7 @@ const SideDrawer = () => {
                 </Button>
               )}
             </MenuList>
-          </Menu>
+          </Menu> */}
           <Menu>
             <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
               <Avatar
@@ -203,32 +185,20 @@ const SideDrawer = () => {
       <Drawer placement={"left"} onClose={onClose} isOpen={isOpen}>
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerHeader borderBottomWidth={"1px"}>Search User</DrawerHeader>
-
+          <DrawerHeader borderBottomWidth={"1px"}>My Group Chats</DrawerHeader>
+          <GroupChatModal>
+            <Button width={"100%"} alignSelf={"center"} color={"red"}>
+              Create New Group
+            </Button>
+          </GroupChatModal>
           <DrawerBody>
-            <Box display={"flex"} pb={2}>
-              <Input
-                placeholder="Search by name or email"
-                mr={2}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+            {chats?.map((chat) => (
+              <ChatList
+                key={chat._id}
+                chat={chat}
+                handleFunction={() => accessChat(chat._id)}
               />
-              <Button onClick={handleSearch}>Go</Button>
-            </Box>
-            {loading ? (
-              <ChatLoading />
-            ) : (
-              searchResult?.map((user) => (
-                <UserListItem
-                  // key={user._id}
-                  key={user._id}
-                  user={user}
-                  handleFunction={() => accessChat(user._id)}
-                  // handleFunction={() => accessChat(user._id)}
-                />
-              ))
-            )}
-            {loadingChat && <Spinner display="flex" ml="auto" />}
+            ))}
           </DrawerBody>
         </DrawerContent>
       </Drawer>

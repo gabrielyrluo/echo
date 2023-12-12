@@ -1,32 +1,50 @@
 import React, { useEffect, useState } from "react";
 import { ChatState } from "../../Context/chatProvider";
-import { Box, useToast, Button, Stack, Text } from "@chakra-ui/react";
+import { Box, useToast, Stack, Text, Button } from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import axios from "axios";
-import ChatLoading from "./ChatLoading";
-import { getSender } from "../../config/Chatlogic";
-import GroupChatModal from "./GroupChatModal";
+import ChatLoading from "../miscellaneous/ChatLoading";
+import ChannelModal from "./ChannalModal";
 
-const MyChats = ({ fetchAgain }) => {
+const Channels = ({ fetchAgain }) => {
   const [loggedUser, setLoggedUser] = useState();
-  const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
+  const {
+    selectedChat,
+    setSelectedChat,
+    user,
+    chats,
+    setChats,
+    channels,
+    setChannels,
+    setSelectedChannel,
+    selectedChannel,
+  } = ChatState();
   const toast = useToast();
 
-  const fetchChats = async () => {
-    // console.log(user._id);
+  const fetchChannels = async () => {
+    if (!selectedChat) {
+      return;
+    }
+
     try {
       const config = {
         headers: {
+          "Content-type": "application/json",
           Authorization: `Bearer ${user.token}`,
         },
       };
 
-      const { data } = await axios.get("/api/chat", config);
-      setChats(data);
+      const { data } = await axios.post(
+        "/api/channel",
+        { groupId: selectedChat._id },
+        config
+      );
+      console.log(data);
+      setChannels(data);
     } catch (error) {
       toast({
         title: "Error Occured!",
-        description: "Failed to Load the chats",
+        description: "Failed to Load the channels",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -37,12 +55,12 @@ const MyChats = ({ fetchAgain }) => {
 
   useEffect(() => {
     setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
-    fetchChats();
-  }, [fetchAgain]);
+    fetchChannels();
+  }, [selectedChat, fetchAgain]);
 
   return (
     <Box
-      display={{ base: selectedChat ? "none" : "flex", md: "flex" }}
+      display={{ base: selectedChannel ? "none" : "flex", md: "flex" }}
       flexDir="column"
       alignItems="center"
       p={3}
@@ -60,16 +78,16 @@ const MyChats = ({ fetchAgain }) => {
         justifyContent="space-between"
         alignItems="center"
       >
-        My Chats
-        <GroupChatModal>
+        {selectedChat?.chatName}
+        <ChannelModal>
           <Button
-            d="flex"
+            display={selectedChat ? "flex" : "none"}
             fontSize={{ base: "17px", md: "10px", lg: "17px" }}
             rightIcon={<AddIcon />}
           >
-            New Group Chat
+            New Channel
           </Button>
-        </GroupChatModal>
+        </ChannelModal>
       </Box>
       <Box
         display="flex"
@@ -81,24 +99,20 @@ const MyChats = ({ fetchAgain }) => {
         // borderRadius="lg"
         overflowY="hidden"
       >
-        {chats ? (
+        {channels ? (
           <Stack overflowY={"scroll"}>
-            {chats.map((chat) => (
+            {channels.map((channel) => (
               <Box
-                onClick={() => setSelectedChat(chat)}
+                onClick={() => setSelectedChannel(channel)}
                 cursor="pointer"
-                bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                color={selectedChat === chat ? "white" : "black"}
+                bg={selectedChannel === channel ? "#38B2AC" : "#E8E8E8"}
+                color={selectedChannel === channel ? "white" : "black"}
                 px={3}
                 py={2}
                 // borderRadius="lg"
-                key={chat._id}
+                key={channel._id}
               >
-                <Text>
-                  {!chat.isGroupChat
-                    ? getSender(loggedUser, chat.users)
-                    : chat.chatName}
-                </Text>
+                <Text>{channel.channelName}</Text>
               </Box>
             ))}
           </Stack>
@@ -110,4 +124,4 @@ const MyChats = ({ fetchAgain }) => {
   );
 };
 
-export default MyChats;
+export default Channels;
