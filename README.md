@@ -6,4 +6,7 @@ npm run build
 
 之后就能正常运行
 
-lbwnb!!!
+How to run?
+Need a .env file under root dir (not provide for security reason)
+cd to root dir
+$nmp run build
