@@ -10,3 +10,8 @@ How to run?
 Need a .env file under root dir (not provide for security reason)
 cd to root dir
 $nmp run build
+
+
+web address for public: https://e3-nxsh.onrender.com (not always activated)
+
+STILL ADDING MORE FUNCTIONALITIES!!!
