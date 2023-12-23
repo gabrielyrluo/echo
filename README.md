@@ -15,3 +15,5 @@ $nmp run build
 web address for public: https://e3-nxsh.onrender.com (not always activated)
 
 STILL ADDING MORE FUNCTIONALITIES!!!
+
+Support Private Chat, Group Chat with Channels.
